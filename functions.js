@@ -51,120 +51,42 @@ CustomFunctions.associate("COMPTECOULEURS", COMPTECOULEURS);
 
 /**
  * Envoie un texte à un modèle d'IA avec une instruction et retourne la réponse.
- * La clé API doit être stockée dans une plage nommée Excel (ex: BIBRAC_OPENAI_KEY).
+ * Les clés API sont gérées côté serveur (Cloudflare Worker) — aucune clé à saisir dans Excel.
+ *
+ * Fournisseurs disponibles :
+ *   - claude  : Anthropic Claude Haiku        ✅ clé configurée
+ *   - gemini  : Google Gemini 2.0 Flash       ✅ clé configurée
+ *   - openai  : OpenAI GPT-4o Mini            ⏳ clé à ajouter dans Cloudflare (OPENAI_KEY)
+ *   - grok    : xAI Grok 3                    ⏳ clé à ajouter dans Cloudflare (GROK_KEY)
+ *   - llama   : Meta Llama 3.1 70B via Groq   ⏳ clé à ajouter dans Cloudflare (LLAMA_KEY)
+ *
  * @customfunction
  * @param {string} texte Le texte à traiter (contenu de la cellule)
  * @param {string} instruction L'instruction à donner au modèle (ex: "Traduis en anglais")
- * @param {string} [provider] Fournisseur IA : claude, openai, gemini, grok, llama (défaut: openai)
+ * @param {string} [provider] Fournisseur IA : claude, openai, gemini, grok, llama (défaut: gemini)
  * @returns {Promise<string>} La réponse générée par le modèle
  */
 async function AI(texte, instruction, provider) {
-  const providerNorm = (provider || "openai").toLowerCase().trim();
+  // URL du proxy Cloudflare Worker — les clés API sont stockées dans Cloudflare
+  const PROXY_URL = "https://fonction-excel.mafiases97-1.workers.dev";
 
-  // Récupération de la clé API depuis une plage nommée Excel
-  // Ex: créer une plage nommée "BIBRAC_OPENAI_KEY" avec votre clé API
-  const nomCle = `BIBRAC_${providerNorm.toUpperCase()}_KEY`;
-  let cleApi = "";
-
-  try {
-    await Excel.run(async (context) => {
-      const namedItem = context.workbook.names.getItem(nomCle);
-      namedItem.load("value");
-      await context.sync();
-      cleApi = String(namedItem.value).trim();
-    });
-  } catch (e) {
-    throw new Error(`Clé API manquante. Créez une plage nommée "${nomCle}" dans Excel avec votre clé API.`);
-  }
-
-  if (!cleApi) {
-    throw new Error(`La plage nommée "${nomCle}" est vide.`);
-  }
-
-  // Configuration de chaque fournisseur
-  let url, headers, body, extraireReponse;
-
-  switch (providerNorm) {
-
-    case "claude":
-      url = "https://api.anthropic.com/v1/messages";
-      headers = {
-        "Content-Type": "application/json",
-        "x-api-key": cleApi,
-        "anthropic-version": "2023-06-01"
-      };
-      body = {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: `${instruction}\n\n${texte}` }]
-      };
-      extraireReponse = (data) => data.content[0].text;
-      break;
-
-    case "gemini":
-      url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${cleApi}`;
-      headers = { "Content-Type": "application/json" };
-      body = {
-        contents: [{ parts: [{ text: `${instruction}\n\n${texte}` }] }]
-      };
-      extraireReponse = (data) => data.candidates[0].content.parts[0].text;
-      break;
-
-    case "grok":
-      url = "https://api.x.ai/v1/chat/completions";
-      headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${cleApi}`
-      };
-      body = {
-        model: "grok-3",
-        messages: [{ role: "user", content: `${instruction}\n\n${texte}` }]
-      };
-      extraireReponse = (data) => data.choices[0].message.content;
-      break;
-
-    case "llama":
-      url = "https://api.groq.com/openai/v1/chat/completions";
-      headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${cleApi}`
-      };
-      body = {
-        model: "llama-3.1-70b-versatile",
-        messages: [{ role: "user", content: `${instruction}\n\n${texte}` }]
-      };
-      extraireReponse = (data) => data.choices[0].message.content;
-      break;
-
-    case "openai":
-    default:
-      url = "https://api.openai.com/v1/chat/completions";
-      headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${cleApi}`
-      };
-      body = {
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: `${instruction}\n\n${texte}` }]
-      };
-      extraireReponse = (data) => data.choices[0].message.content;
-      break;
-  }
-
-  // Appel API
-  const response = await fetch(url, {
+  const response = await fetch(PROXY_URL, {
     method: "POST",
-    headers: headers,
-    body: JSON.stringify(body)
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provider: provider || "gemini",
+      texte: texte,
+      instruction: instruction
+    })
   });
 
   if (!response.ok) {
     const erreur = await response.json().catch(() => ({}));
-    throw new Error(`Erreur ${providerNorm} (${response.status}): ${JSON.stringify(erreur)}`);
+    throw new Error(`Erreur proxy (${response.status}): ${JSON.stringify(erreur)}`);
   }
 
   const data = await response.json();
-  return extraireReponse(data).trim();
+  return data.reponse;
 }
 
 CustomFunctions.associate("AI", AI);
