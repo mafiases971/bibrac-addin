@@ -1,3 +1,25 @@
 {
-  "functions": []
+  "functions": [
+    {
+      "id": "COMPTECOULEURS",
+      "name": "COMPTECOULEURS",
+      "description": "Compte le nombre de cellules d'une plage ayant la même couleur de fond que la cellule cible",
+      "parameters": [
+        {
+          "name": "adresseCible",
+          "description": "Adresse de la cellule de référence dont la couleur est comparée (ex: \"A1\")",
+          "type": "string"
+        },
+        {
+          "name": "adressePlage",
+          "description": "Adresse de la plage de cellules à analyser (ex: \"B1:D10\")",
+          "type": "string"
+        }
+      ],
+      "result": {
+        "type": "number",
+        "dimensionality": "scalar"
+      }
+    }
+  ]
 }
