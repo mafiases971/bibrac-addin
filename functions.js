@@ -72,7 +72,10 @@ async function AI(texte, instruction, provider) {
 
   const response = await fetch(PROXY_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Bibrac-Token": "GjcZs7OJ0TEOk9BcwqXSmb8CintRoGz6zi0Sx7wsYC4"
+    },
     body: JSON.stringify({
       provider: provider || "gemini",
       texte: texte,
