@@ -4,14 +4,19 @@
 /**
  * Convertit une valeur scalaire ou une matrice 2D en texte lisible pour l’IA.
  * Permet de passer aussi bien une cellule unique qu’une plage (ex: A1:C10).
+ * Gère les cellules vides (null/undefined) sans erreur.
  * @param {string|string[][]} valeur Valeur ou plage de cellules
  * @returns {string} Texte formaté (colonnes séparées par tabulation, lignes par saut de ligne)
  */
 function matriceVersTexte(valeur) {
   if (Array.isArray(valeur)) {
-    return valeur.map(row => row.join("\t")).join("\n");
+    return valeur
+      .map(row => Array.isArray(row)
+        ? row.map(cell => (cell === null || cell === undefined) ? "" : String(cell)).join("	")
+        : (row === null || row === undefined) ? "" : String(row))
+      .join("\n");
   }
-  return String(valeur);
+  return (valeur === null || valeur === undefined) ? "" : String(valeur);
 }
 
 /**
