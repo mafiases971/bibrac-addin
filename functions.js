@@ -1,12 +1,25 @@
-﻿// BIBRAC Add-in â€” Fonctions personnalisÃ©es Excel
+// BIBRAC Add-in — Fonctions personnalisées Excel
 // Les fonctions sont disponibles dans Excel sous la forme =BIBRAC.NOM_FONCTION()
 
 /**
- * Compte le nombre de cellules d'une plage ayant la mÃªme couleur de fond que la cellule cible.
+ * Convertit une valeur scalaire ou une matrice 2D en texte lisible pour l’IA.
+ * Permet de passer aussi bien une cellule unique qu’une plage (ex: A1:C10).
+ * @param {string|string[][]} valeur Valeur ou plage de cellules
+ * @returns {string} Texte formaté (colonnes séparées par tabulation, lignes par saut de ligne)
+ */
+function matriceVersTexte(valeur) {
+  if (Array.isArray(valeur)) {
+    return valeur.map(row => row.join("\t")).join("\n");
+  }
+  return String(valeur);
+}
+
+/**
+ * Compte le nombre de cellules d’une plage ayant la même couleur de fond que la cellule cible.
  * @customfunction
- * @param {string} adresseCible Adresse de la cellule de rÃ©fÃ©rence (ex: "A1")
- * @param {string} adressePlage Adresse de la plage Ã  analyser (ex: "B1:D10")
- * @returns {Promise<number>} Nombre de cellules ayant la mÃªme couleur de fond
+ * @param {string} adresseCible Adresse de la cellule de référence (ex: "A1")
+ * @param {string} adressePlage Adresse de la plage à analyser (ex: "B1:D10")
+ * @returns {Promise<number>} Nombre de cellules ayant la même couleur de fond
  */
 async function COMPTECOULEURS(adresseCible, adressePlage) {
   return Excel.run(async (context) => {
@@ -24,7 +37,7 @@ async function COMPTECOULEURS(adresseCible, adressePlage) {
     plage.load(["rowCount", "columnCount"]);
     await context.sync();
 
-    // Chargement groupÃ© des couleurs de toutes les cellules
+    // Chargement groupé des couleurs de toutes les cellules
     const cellules = [];
     for (let row = 0; row < plage.rowCount; row++) {
       for (let col = 0; col < plage.columnCount; col++) {
@@ -50,24 +63,24 @@ async function COMPTECOULEURS(adresseCible, adressePlage) {
 CustomFunctions.associate("COMPTECOULEURS", COMPTECOULEURS);
 
 /**
- * Envoie un texte Ã  un modÃ¨le d'IA avec une instruction et retourne la rÃ©ponse.
- * Les clÃ©s API sont gÃ©rÃ©es cÃ´tÃ© serveur (Cloudflare Worker) â€” aucune clÃ© Ã  saisir dans Excel.
+ * Envoie un texte à un modèle d’IA avec une instruction et retourne la réponse.
+ * Le paramètre texte accepte une cellule unique ou une plage de cellules (ex: A1:C10).
+ * Les clés API sont gérées côté serveur (Cloudflare Worker) — aucune clé à saisir dans Excel.
  *
  * Fournisseurs disponibles :
- *   - claude  : Anthropic Claude Haiku        âœ… clÃ© configurÃ©e
- *   - gemini  : Google Gemini 2.0 Flash       âœ… clÃ© configurÃ©e
- *   - openai  : OpenAI GPT-4o Mini            â³ clÃ© Ã  ajouter dans Cloudflare (OPENAI_KEY)
- *   - grok    : xAI Grok 3                    â³ clÃ© Ã  ajouter dans Cloudflare (GROK_KEY)
- *   - llama   : Meta Llama 3.1 70B via Groq   â³ clÃ© Ã  ajouter dans Cloudflare (LLAMA_KEY)
+ *   - claude  : Anthropic Claude Haiku        clé configurée
+ *   - gemini  : Google Gemini 2.0 Flash       clé configurée
+ *   - openai  : OpenAI GPT-4o Mini            clé à ajouter dans Cloudflare (OPENAI_KEY)
+ *   - grok    : xAI Grok 3                    clé à ajouter dans Cloudflare (GROK_KEY)
+ *   - llama   : Meta Llama 3.1 70B via Groq   clé à ajouter dans Cloudflare (LLAMA_KEY)
  *
  * @customfunction
- * @param {string} texte Le texte Ã  traiter (contenu de la cellule)
- * @param {string} instruction L'instruction Ã  donner au modÃ¨le (ex: "Traduis en anglais")
- * @param {string} [provider] Fournisseur IA : claude, openai, gemini, grok, llama (dÃ©faut: gemini)
- * @returns {Promise<string>} La rÃ©ponse gÃ©nÃ©rÃ©e par le modÃ¨le
+ * @param {string[][]} texte Le texte ou la plage de cellules à traiter (ex: A1:C10)
+ * @param {string} instruction L’instruction à donner au modèle (ex: "Traduis en anglais")
+ * @param {string} [provider] Fournisseur IA : claude, openai, gemini, grok, llama (défaut: gemini)
+ * @returns {Promise<string>} La réponse générée par le modèle
  */
 async function AI(texte, instruction, provider) {
-  // URL du proxy Cloudflare Worker â€” les clÃ©s API sont stockÃ©es dans Cloudflare
   const PROXY_URL = "https://fonction-excel.mafiases97-1.workers.dev";
 
   const response = await fetch(PROXY_URL, {
@@ -78,7 +91,7 @@ async function AI(texte, instruction, provider) {
     },
     body: JSON.stringify({
       provider: provider || "gemini",
-      texte: texte,
+      texte: matriceVersTexte(texte),
       instruction: instruction
     })
   });
@@ -95,20 +108,23 @@ async function AI(texte, instruction, provider) {
 CustomFunctions.associate("AI", AI);
 
 /**
- * Envoie une instruction a un modele d'IA et retourne le resultat sous forme de matrice Excel.
- * L'IA est automatiquement guidee pour repondre en tableau JSON 2D.
+ * Envoie une instruction à un modèle d’IA et retourne le résultat sous forme de matrice Excel.
+ * Le paramètre texte accepte une cellule unique ou une plage de cellules (ex: A1:C10).
+ * L’IA est automatiquement guidée pour répondre en tableau JSON 2D.
  *
  * @customfunction
- * @param {string} texte Le texte ou contexte a traiter
- * @param {string} instruction L'instruction decrivant la matrice souhaitee
- * @param {string} [provider] Fournisseur IA : claude, openai, gemini, grok, llama (defaut: gemini)
- * @returns {Promise<string[][]>} Tableau 2D retourne dans les cellules Excel
+ * @param {string[][]} texte Le texte ou la plage de cellules à traiter (ex: A1:C10)
+ * @param {string} instruction L’instruction décrivant la matrice souhaitée
+ * @param {string} [provider] Fournisseur IA : claude, openai, gemini, grok, llama (défaut: gemini)
+ * @returns {Promise<string[][]>} Tableau 2D retourné dans les cellules Excel
  */
 async function AIMATRICE(texte, instruction, provider) {
   const PROXY_URL = "https://fonction-excel.mafiases97-1.workers.dev";
+
   const instructionMatrice = instruction +
     ". Reponds UNIQUEMENT avec un tableau JSON 2D valide, sans texte ni explication autour. " +
     "Exemple de format attendu : [[\"Colonne1\",\"Colonne2\"],[\"valeur1\",\"valeur2\"]]";
+
   const response = await fetch(PROXY_URL, {
     method: "POST",
     headers: {
@@ -117,15 +133,18 @@ async function AIMATRICE(texte, instruction, provider) {
     },
     body: JSON.stringify({
       provider: provider || "gemini",
-      texte: texte,
+      texte: matriceVersTexte(texte),
       instruction: instructionMatrice
     })
   });
+
   if (!response.ok) {
     const erreur = await response.json().catch(() => ({}));
     throw new Error("Erreur proxy (" + response.status + "): " + JSON.stringify(erreur));
   }
+
   const data = await response.json();
+
   try {
     let reponse = data.reponse.trim();
     reponse = reponse.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
@@ -135,7 +154,7 @@ async function AIMATRICE(texte, instruction, provider) {
     }
     return matrice;
   } catch (e) {
-    throw new Error("La reponse n'est pas une matrice valide. Precisez davantage votre instruction.");
+    throw new Error("La reponse n’est pas une matrice valide. Precisez davantage votre instruction.");
   }
 }
 
