@@ -29,7 +29,8 @@
         {
           "name": "texte",
           "description": "Le texte ou la plage de cellules à traiter (ex: A1:C10)",
-          "type": "string[][]"
+          "type": "string",
+          "dimensionality": "matrix"
         },
         {
           "name": "instruction",
@@ -57,7 +58,8 @@
         {
           "name": "texte",
           "description": "Le texte ou la plage de cellules à traiter (ex: A1:C10)",
-          "type": "string[][]"
+          "type": "string",
+          "dimensionality": "matrix"
         },
         {
           "name": "instruction",
