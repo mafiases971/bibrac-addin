@@ -3,16 +3,16 @@
     {
       "id": "COMPTECOULEURS",
       "name": "COMPTECOULEURS",
-      "description": "Compte le nombre de cellules d'une plage ayant la meme couleur de fond que la cellule cible",
+      "description": "Compte le nombre de cellules d’une plage ayant la même couleur de fond que la cellule cible",
       "parameters": [
         {
           "name": "adresseCible",
-          "description": "Adresse de la cellule de reference dont la couleur est comparee (ex: \"A1\")",
+          "description": "Adresse de la cellule de référence dont la couleur est comparée (ex: \"A1\")",
           "type": "string"
         },
         {
           "name": "adressePlage",
-          "description": "Adresse de la plage de cellules a analyser (ex: \"B1:D10\")",
+          "description": "Adresse de la plage de cellules à analyser (ex: \"B1:D10\")",
           "type": "string"
         }
       ],
@@ -24,24 +24,24 @@
     {
       "id": "AI",
       "name": "AI",
-      "description": "Envoie un texte a un modele d'IA avec une instruction et retourne la reponse. La cle API doit etre stockee dans une plage nommee Excel (ex: BIBRAC_OPENAI_KEY).",
+      "description": "Envoie un texte ou une plage de cellules à un modèle d’IA avec une instruction et retourne la réponse.",
       "parameters": [
         {
           "name": "texte",
-          "description": "Le texte a traiter (ex: contenu d'une cellule)",
-          "type": "string"
+          "description": "Le texte ou la plage de cellules à traiter (ex: A1:C10)",
+          "type": "string[][]"
         },
         {
           "name": "instruction",
-          "description": "L'instruction a donner au modele (ex: \"Traduis en anglais\", \"Resume en 3 points\")",
+          "description": "L’instruction à donner au modèle (ex: \"Traduis en anglais\", \"Résume en 3 points\")",
           "type": "string"
         },
         {
           "name": "provider",
-          "description": "Fournisseur IA : claude, openai, gemini, grok, llama (defaut: openai)",
+          "description": "Fournisseur IA : claude, openai, gemini, grok, llama (défaut: gemini)",
           "type": "string",
           "optional": true,
-          "defaultValue": "openai"
+          "defaultValue": "gemini"
         }
       ],
       "result": {
@@ -52,21 +52,21 @@
     {
       "id": "AIMATRICE",
       "name": "AIMATRICE",
-      "description": "Envoie une instruction a un modele d'IA et retourne le resultat sous forme de matrice Excel (tableau multi-lignes/colonnes).",
+      "description": "Envoie un texte ou une plage de cellules à un modèle d’IA et retourne le résultat sous forme de matrice Excel.",
       "parameters": [
         {
           "name": "texte",
-          "description": "Le texte ou contexte a traiter (peut etre vide \"\")",
-          "type": "string"
+          "description": "Le texte ou la plage de cellules à traiter (ex: A1:C10)",
+          "type": "string[][]"
         },
         {
           "name": "instruction",
-          "description": "L'instruction decrivant la matrice souhaitee (ex: \"Liste les 10 pays les plus riches avec leur PIB\")",
+          "description": "L’instruction décrivant la matrice souhaitée (ex: \"Liste les 10 pays les plus riches avec leur PIB\")",
           "type": "string"
         },
         {
           "name": "provider",
-          "description": "Fournisseur IA : claude, openai, gemini, grok, llama (defaut: gemini)",
+          "description": "Fournisseur IA : claude, openai, gemini, grok, llama (défaut: gemini)",
           "type": "string",
           "optional": true,
           "defaultValue": "gemini"
